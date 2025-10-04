@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>@Flaresified | Invispot</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #000;
+  --muted: #9a9a9a;
+  --glass-tint: rgba(255,255,255,0.04);
+  --glass-blur: 20px;
+  --border: rgba(255,255,255,0.12);
+  --toast-time: 3500ms;
+  --selection-gradient: linear-gradient(90deg, rgba(124,58,237,0.9), rgba(6,182,212,0.9));
+}
+
+* { box-sizing: border-box; margin:0; padding:0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(100% 120% at 50% 10%, #0d0d12, #000);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto;
+  color: #fff;
+  padding: 20px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* iOS 26 style text selection for white text */
+::selection {
+  background: var(--selection-gradient);
+  color: #fff;
+  text-shadow: 0 0 1px rgba(0,0,0,0.5);
+}
+
+.wrap { width: 420px; max-width: 95vw; perspective: 1000px; }
+
+.card {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  box-shadow: inset 0 0 40px rgba(255,255,255,0.02), 0 10px 30px rgba(0,0,0,0.6);
+  transition: transform .3s ease, box-shadow .3s ease;
+  transform-style: preserve-3d;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(80% 100% at 50% 0%, rgba(255,255,255,0.12), transparent 60%);
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  animation: shimmer 6s ease-in-out infinite alternate;
+}
+@keyframes shimmer { from { transform: translateY(-6%) scale(1.01); opacity:.25; } to { transform: translateY(6%) scale(1.03); opacity:.55; } }
+
+.banner { width:100%; height:100px; overflow:hidden; border-bottom:1px solid rgba(255,255,255,0.06); }
+.banner img { width:100%; height:100%; object-fit:cover; display:block; }
+
+.profile { display:flex; align-items:center; gap:16px; padding:16px 18px; transform: translateZ(40px); }
+.pfp { flex-shrink:0; width:64px; height:64px; border-radius:50%; overflow:hidden; border:1.5px solid rgba(255,255,255,0.18); box-shadow:0 6px 18px rgba(0,0,0,0.6); background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); }
+.pfp img { width:100%; height:100%; object-fit:cover; display:block; }
+
+.info h1 { font-size:16px; font-weight:600; margin-bottom:4px; letter-spacing:0.2px; }
+.info p { font-size:13px; color: var(--muted); }
+
+.links { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; padding:0 18px 14px; }
+.link {
+  display:flex; align-items:center; gap:10px; justify-content:center; padding:12px 10px; border-radius:12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border:1px solid rgba(255,255,255,0.06);
+  text-decoration:none; color:#fff; font-size:14px; font-weight:600;
+  transition: transform .16s cubic-bezier(.2,.9,.3,1), box-shadow .16s ease, background .2s ease;
+  user-select:none; position:relative; overflow:hidden;
+}
+.link:active { transform: translateY(1px) scale(.998); }
+.link .ico { width:18px; height:18px; object-fit:contain; }
+.link:hover { transform: translateY(-4px); box-shadow:0 10px 30px rgba(0,0,0,0.6); }
+
+/* Ripple effect on click */
+.link::after {
+  content:""; position:absolute; border-radius:50%; background:rgba(255,255,255,0.18);
+  width:0; height:0; top:50%; left:50%; transform:translate(-50%,-50%); opacity:0; pointer-events:none;
+  transition: width .35s ease, height .35s ease, opacity .45s ease;
+}
+.link:active::after {
+  width:200%; height:200%; opacity:0.15; transition:0s; 
+}
+
+.tiny { text-align:center; font-size:11px; color:var(--muted); padding:8px 0 14px; }
+
+/* Toast notifications */
+.toast-root { position: fixed; left:50%; top:14px; transform: translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+.toast {
+  display:flex; gap:12px; align-items:center; padding:12px 14px; border-radius:14px;
+  border:1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow:0 8px 40px rgba(0,0,0,0.6);
+  color:#fff; transform: translateY(-20px) scale(.95); opacity:0;
+  transition: transform .35s cubic-bezier(.2,.9,.3,1), opacity .28s ease;
+  pointer-events:auto; user-select:none;
+}
+.toast.show { transform: translateY(0) scale(1); opacity:1; }
+
+.toast .t-ico {
+  width:40px; height:40px; border-radius:10px; display:grid; place-items:center;
+  background: linear-gradient(180deg, rgba(124,58,237,0.15), rgba(6,182,212,0.08));
+  border:1px solid rgba(255,255,255,0.06);
+  position: relative; overflow:hidden;
+}
+.toast .t-ico::before {
+  content:""; position:absolute; inset:0; border-radius:10px;
+  background: linear-gradient(90deg, rgba(124,58,237,0.25), rgba(6,182,212,0.25));
+  animation: pulse 1.6s ease-in-out infinite alternate;
+}
+@keyframes pulse { from{opacity:0.35;} to{opacity:0.05;} }
+.toast .t-body { font-size:14px; font-weight:600; color:#fff; z-index:1; position:relative; }
+</style>
+</head>
+<body>
+
+<div class="wrap" id="wrap">
+  <div class="card" id="card">
+    <div class="banner"><img src="Banner.png" alt="banner"></div>
+    <div class="profile">
+      <div class="pfp"><img src="pfp.png" alt="profile"></div>
+      <div class="info">
+        <h1>Flaresified</h1>
+        <p>Live Laugh Love Liquid Glass and Sabrina Carpenter</p>
+      </div>
+    </div>
+
+    <div class="links">
+      <a class="link" href="#" id="discordBtn">
+        <img src="discord.png" alt="Discord" class="ico">Discord
+      </a>
+      <a class="link" href="https://www.youtube.com/@Flaresified" target="_blank">
+        <img src="youtube.png" alt="YouTube" class="ico">YouTube
+      </a>
+      <a class="link" href="https://www.x.com/Flaresified" target="_blank">
+        <img src="twitter.png" alt="Twitter" class="ico">Twitter
+      </a>
+      <a class="link" href="mailto:flaares@icloud.com" id="emailBtn">
+        <img src="email.png" alt="Email" class="ico">Email
+      </a>
+    </div>
+
+    <div class="tiny">(¬_¬")</div>
+  </div>
+</div>
+
+<div class="toast-root" id="toastRoot" aria-live="polite"></div>
+
+<script>
+const TOAST_DURATION = 3500;
+const discordCopyText = 'Flaresified';
+const emailCopyText = 'flaares@icloud.com';
+const toastRoot = document.getElementById('toastRoot');
+
+function writeClipboard(text) {
+  if (!text) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).catch(()=>{});
+  const ta = document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px';
+  document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+}
+
+function showToast(message){
+  const t = document.createElement('div'); t.className='toast';
+  const ico=document.createElement('div'); ico.className='t-ico';
+  ico.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24"><path d="M9 12.5l2 2 4-4" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const body=document.createElement('div'); body.className='t-body'; body.textContent=message;
+  t.appendChild(ico); t.appendChild(body); toastRoot.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  const hideNow=()=>{ t.classList.remove('show'); setTimeout(()=>{if(t.parentNode)t.parentNode.removeChild(t);},300); };
+  t.addEventListener('mouseenter', hideNow); t.addEventListener('touchstart', hideNow);
+  setTimeout(hideNow, TOAST_DURATION);
+}
+
+document.getElementById('discordBtn').addEventListener('click', e=>{
+  e.preventDefault(); writeClipboard(discordCopyText); showToast('Copied "Flaresified" to clipboard');
+});
+document.getElementById('emailBtn').addEventListener('click', e=>{
+  e.preventDefault(); writeClipboard(emailCopyText); showToast('Copied email to clipboard');
+  const mailto = e.currentTarget.getAttribute('href');
+  const w = window.open(mailto,'_blank','noopener,noreferrer'); if(w) w.focus();
+});
+
+// 3D tilt
+(function(){
+  const wrap=document.getElementById('wrap'); const card=document.getElementById('card'); const maxTilt=10; let bounds;
+  function updateBounds(){ bounds=wrap.getBoundingClientRect(); }
+  updateBounds(); window.addEventListener('resize',updateBounds);
+  let raf=null, mouse={x:0,y:0}, last={x:0,y:0};
+  function onMove(e){
+    const cx=e.touches?e.touches[0].clientX:e.clientX;
+    const cy=e.touches?e.touches[0].clientY:e.clientY;
+    mouse.x=(cx-bounds.left)/bounds.width; mouse.y=(cy-bounds.top)/bounds.height;
+    if(!raf) raf=requestAnimationFrame(loop);
+  }
+  function loop(){ last.x+=(mouse.x-last.x)*0.1; last.y+=(mouse.y-last.y)*0.1;
+    const rotY=(last.x-0.5)*maxTilt*2*-1; const rotX=(last.y-0.5)*maxTilt*2;
+    card.style.transform=`rotateX(${rotX}deg) rotateY(${rotY}deg)`; raf=null; }
+  function reset(){ card.style.transform=''; }
+  wrap.addEventListener('mousemove',onMove); wrap.addEventListener('mouseleave',reset);
+  wrap.addEventListener('touchmove',onMove,{passive:true}); wrap.addEventListener('touchend',reset);
+})();
+</script>
+</body>
+</html>
